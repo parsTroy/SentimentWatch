@@ -1,9 +1,264 @@
 ﻿@page "/"
+@inject StockSentiment.Web.Services.ISentimentClient SentimentClient
 
-<PageTitle>Index</PageTitle>
+<PageTitle>SentimentWatch - Dashboard</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="text-center mb-5">
+    <h1 class="display-4 fw-bold mb-3">Stock Sentiment Analysis</h1>
+    <p class="lead text-muted">Analyze market sentiment through news and price data</p>
+</div>
 
-Welcome to your new app.
+<div class="row justify-content-center mb-4">
+    <div class="col-12 col-lg-10 col-xl-8">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-8">
+                        <label for="symbolInput" class="form-label fw-semibold small text-uppercase text-muted">Stock Symbol</label>
+                        <input id="symbolInput"
+                               class="form-control form-control-lg"
+                               @bind="symbol"
+                               @bind:event="oninput"
+                               @onkeypress="OnKeyPress"
+                               placeholder="e.g. AAPL, TSLA, MSFT"
+                               autofocus />
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-primary btn-lg w-100"
+                                @onclick="OnAnalyzeClicked"
+                                disabled="@isLoading">
+                            @if (isLoading)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                <span>Analyzing...</span>
+                            }
+                            else
+                            {
+                                <span>Analyze</span>
+                            }
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="row justify-content-center mb-4">
+        <div class="col-12 col-lg-10 col-xl-8">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong>Error:</strong> @errorMessage
+                <button type="button" class="btn-close" @onclick="() => errorMessage = null" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (snapshot is not null)
+{
+    <div class="mb-4">
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <span class="badge bg-primary fs-6 px-3 py-2">@snapshot.Symbol.ToUpperInvariant()</span>
+            <h2 class="h3 mb-0">Analysis Results</h2>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="small text-uppercase text-muted fw-semibold mb-2">Overall Sentiment</div>
+                        <div class="display-6 fw-bold @GetSentimentColorClass(snapshot.OverallSentiment)">
+                            @snapshot.OverallSentiment
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="small text-uppercase text-muted fw-semibold mb-2">Average Score</div>
+                        <div class="display-6 fw-bold">
+                            @snapshot.AverageScore.ToString("0.00")
+                        </div>
+                        <small class="text-muted">Confidence level</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="small text-uppercase text-muted fw-semibold mb-2">News Articles</div>
+                        <div class="display-6 fw-bold">
+                            @snapshot.News.Count
+                        </div>
+                        <small class="text-muted">Articles analyzed</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">Price History</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        @if (snapshot.PriceHistory.Count == 0)
+                        {
+                            <div class="p-4 text-center text-muted">No price data available</div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th class="text-end">Close Price</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach (var price in snapshot.PriceHistory.OrderByDescending(p => p.Date))
+                                    {
+                                        <tr>
+                                            <td>@price.Date.ToString("MMM dd, yyyy")</td>
+                                            <td class="text-end fw-semibold">$@price.Close.ToString("0.00")</td>
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">News Articles</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        @if (snapshot.News.Count == 0)
+                        {
+                            <div class="p-4 text-center text-muted">No news items available</div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th>Published</th>
+                                        <th>Headline</th>
+                                        <th>Source</th>
+                                        <th>Sentiment</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach (var item in snapshot.News.OrderByDescending(n => n.PublishedAt))
+                                    {
+                                        <tr>
+                                            <td class="text-nowrap small">@item.PublishedAt.ToString("MMM dd")</td>
+                                            <td>
+                                                <a href="@item.Url" 
+                                                   target="_blank" 
+                                                   rel="noopener noreferrer"
+                                                   class="text-decoration-none">
+                                                    @item.Headline
+                                                </a>
+                                            </td>
+                                            <td class="small text-muted">@item.Source</td>
+                                            <td>
+                                                <span class="badge @GetSentimentBadgeClass(item.Sentiment) mb-1 d-block">
+                                                    @item.Sentiment
+                                                </span>
+                                                <small class="text-muted">@item.Score.ToString("0.00")</small>
+                                            </td>
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private string symbol = string.Empty;
+    private bool isLoading;
+    private string? errorMessage;
+    private StockSentiment.Core.Models.SentimentSnapshot? snapshot;
+
+    private async Task OnAnalyzeClicked()
+    {
+        errorMessage = null;
+        snapshot = null;
+
+        if (string.IsNullOrWhiteSpace(symbol))
+        {
+            errorMessage = "Please enter a stock symbol.";
+            return;
+        }
+
+        isLoading = true;
+
+        try
+        {
+            var result = await SentimentClient.GetSentimentAsync(symbol.Trim().ToUpperInvariant());
+            if (result is null)
+            {
+                errorMessage = "No data returned for the given symbol.";
+            }
+            else
+            {
+                snapshot = result;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Could not load sentiment data: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task OnKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !isLoading && !string.IsNullOrWhiteSpace(symbol))
+        {
+            await OnAnalyzeClicked();
+        }
+    }
+
+    private string GetSentimentColorClass(string sentiment)
+    {
+        return sentiment.ToUpperInvariant() switch
+        {
+            "POSITIVE" => "text-success",
+            "NEGATIVE" => "text-danger",
+            "NEUTRAL" => "text-secondary",
+            _ => "text-muted"
+        };
+    }
+
+    private string GetSentimentBadgeClass(string sentiment)
+    {
+        return sentiment.ToUpperInvariant() switch
+        {
+            "POSITIVE" => "bg-success",
+            "NEGATIVE" => "bg-danger",
+            "NEUTRAL" => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+}

@@ -1,0 +1,49 @@
+/* Minimal enhancements to Bootstrap components */
+
+/* Sentiment color classes */
+.text-success {
+    color: #34a853 !important;
+}
+
+.text-danger {
+    color: #ea4335 !important;
+}
+
+/* Sentiment badge colors */
+.bg-success {
+    background-color: #34a853 !important;
+}
+
+.bg-danger {
+    background-color: #ea4335 !important;
+}
+
+.bg-secondary {
+    background-color: #9aa0a6 !important;
+}
+
+/* Smooth transitions for cards */
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Better button styling */
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}

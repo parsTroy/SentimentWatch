@@ -1,19 +1,13 @@
 ﻿@inherits LayoutComponentBase
 
-<PageTitle>StockSentiment.Web</PageTitle>
+<PageTitle>SentimentWatch</PageTitle>
 
-<div class="page">
-    <div class="sidebar">
+<div class="d-flex flex-column min-vh-100">
+    <header class="sticky-top bg-white border-bottom shadow-sm">
         <NavMenu />
-    </div>
+    </header>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
+    <main class="flex-grow-1 container-fluid px-3 px-md-4 py-4">
+        @Body
     </main>
 </div>

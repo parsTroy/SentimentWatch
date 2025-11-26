@@ -1,5 +1,3 @@
-using System;
-
 namespace StockSentiment.Core.Models
 {
     public record PricePoint(DateTimeOffset Date, decimal Close);
@@ -16,8 +14,15 @@ namespace StockSentiment.Core.Models
         string Url,
         DateTimeOffset PublishedAt,
         string Source,
-        string Sentiment,  // Positive, Negative, Neutral
-        float Score        // confidence / probability from model
+        string Sentiment,
+        float Score
+    );
+
+    public record SentimentSnapshot(
+        string Symbol,
+        IReadOnlyList<PricePoint> PriceHistory,
+        IReadOnlyList<NewsWithSentiment> News,
+        float AverageScore,
+        string OverallSentiment
     );
 }
-
