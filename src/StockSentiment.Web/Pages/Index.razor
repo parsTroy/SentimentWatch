@@ -47,7 +47,7 @@
 @if (!string.IsNullOrEmpty(errorMessage))
 {
     <div class="row justify-content-center mb-4">
-        <div class="col-12 col-lg-10 col-xl-8">
+        <div class="col-12 col-xl-10">
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 <strong>Error:</strong> @errorMessage
                 <button type="button" class="btn-close" @onclick="() => errorMessage = null" aria-label="Close"></button>
