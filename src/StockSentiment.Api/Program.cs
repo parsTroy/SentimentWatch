@@ -5,8 +5,16 @@ using StockSentiment.Core.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+// Add services to the container.
 builder.Services.AddOpenApi();
-builder.Services.AddSingleton<ISentimentService, MockSentimentService>();
+
+// Register Providers
+builder.Services.AddHttpClient<IStockProvider, StockSentiment.Infrastructure.Services.AlphaVantageStockProvider>();
+builder.Services.AddHttpClient<INewsProvider, StockSentiment.Infrastructure.Services.NewsApiProvider>();
+builder.Services.AddSingleton<ISentimentAnalyzer, StockSentiment.Infrastructure.Services.SimpleSentimentAnalyzer>();
+
+// Register Main Service
+builder.Services.AddScoped<ISentimentService, RealSentimentService>();
 
 // Add CORS for local development
 builder.Services.AddCors(options =>
